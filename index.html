@@ -29,6 +29,15 @@
         .line-speaker { font-weight:700; color:#ffcd7e; margin-right:0.6rem; display:inline-block; min-width:85px; }
         .line-text { color:#e2e8f0; }
         .line-text mark { background: #ffdd88; color: #1e2a3a; border-radius: 4px; padding: 0 2px; }
+        .line-row { display:flex; align-items:flex-start; gap:0.6rem; }
+        .line-row > .line-content { flex:1; min-width:0; }
+        .hint-btn { flex-shrink:0; background:#4a3a1e; border:1px solid #ffcd6b; color:#ffcd7e; border-radius:1.2rem; padding:0.2rem 0.7rem; font-size:0.75rem; cursor:pointer; transition:0.15s; }
+        .hint-btn:hover { background:#5a4628; }
+        .hint-btn.revealed { background:#1e3a4a; border-color:#6bb8ff; color:#7ec8ff; }
+        .line-item.stage-line { padding:0.45rem 1.2rem; font-size:0.82rem; color:#8aa0bc; font-style:italic; border-bottom:1px dashed #2a3a4e; cursor:default; }
+        .line-item.stage-line.highlight { background:#2e4a7c; border-left:4px solid #ffcd6b; }
+        .stage-text { color:#8aa0bc; font-style:italic; }
+        .stage-inline { color:#8aa0bc; font-style:italic; font-size:0.92em; }
         .rehearsal-bar { background:#0f172ab0; border-radius:1.5rem; margin-top:1.5rem; padding:1rem 1.4rem; display:flex; flex-wrap:wrap; align-items:center; gap:1rem; justify-content:space-between; }
         .role-selector { display:flex; align-items:center; gap:0.8rem; background:#00000030; padding:0.3rem 1rem; border-radius:3rem; }
         .progress-info { font-size:0.8rem; font-family:monospace; }
@@ -57,13 +66,15 @@
                 <strong>📘 使用说明</strong><br>
                 1️⃣ 剧本已内置（<code>script.md</code>），无需上传。导演可在线编辑该文件。<br>
                 2️⃣ 在左侧「角色表」中为每个角色选择声线（🎧试听）<br>
-                3️⃣ 在右侧「我的角色」下拉菜单中选定你要扮演的角色 → 你的台词会整行高亮并隐藏原文<br>
-                4️⃣ 点击「▶ 开始排练」→ 其他角色自动朗读，轮到你的角色时点击「💡提示/我说完了」：<br>
-                &nbsp;&nbsp;&nbsp;• 第一次点击：显示当前句原文（永久显示）<br>
-                &nbsp;&nbsp;&nbsp;• 第二次点击：确认说完，进入下一句<br>
-                5️⃣ 使用「⬆️上一句/⬇️下一句我的台词」快速跳转自己的台词段落<br>
-                6️⃣ 使用搜索框（输入关键词后按回车）可查找任意角色或台词，匹配词会高亮显示<br>
-                7️⃣ 如果剧本包含多幕，可使用「选择幕」下拉框切换幕次<br>
+                3️⃣ 在右侧「我的角色」下拉菜单中选定你要扮演的角色 → 你的台词会整行高亮并默认隐藏原文<br>
+                4️⃣ 单行控制：每一行被隐藏的台词右侧都有「💡 提示」按钮，点击即可显示该行；再次点击「🙈 隐藏」可重新隐藏。各行互不影响。<br>
+                5️⃣ 点击「▶ 开始排练」→ 其他角色自动朗读，轮到你的角色时：<br>
+                &nbsp;&nbsp;&nbsp;• 想看原文：点击该行右侧的「💡 提示」<br>
+                &nbsp;&nbsp;&nbsp;• 说完台词：点击下方「✅ 我说完了」即可显示当前句并自动播放下一句<br>
+                6️⃣ 使用「⬆️上一句/⬇️下一句我的台词」快速跳转自己的台词段落<br>
+                7️⃣ 使用搜索框（输入关键词后按回车）可查找任意角色或台词，匹配词会高亮显示<br>
+                8️⃣ 如果剧本包含多幕，可使用「选择幕」下拉框切换幕次。声线与角色选择在所有幕之间共享<br>
+                9️⃣ 舞台提示以 <code>〔...〕</code> 显示为灰色斜体小字，朗读时自动跳过；可用「🎭 隐藏/显示舞台提示」开关一键切换<br>
                 💡 导演如需修改剧本，请直接在 GitHub 仓库中编辑 <code>script.md</code> 文件。
             </div>
         </div>
@@ -85,15 +96,15 @@
                     <button id="searchPrevBtn" class="btn btn-sm">⬆️ 上一个</button>
                     <button id="searchNextBtn" class="btn btn-sm">⬇️ 下一个</button>
                     <button id="searchClearBtn" class="btn btn-sm btn-outline">清除高亮</button>
+                    <button id="toggleStageBtn" class="btn btn-sm">🎭 隐藏舞台提示</button>
                 </div>
                 <div id="scriptLinesContainer" class="script-viewer"><div style="padding:1rem; text-align:center;">加载中...</div></div>
                 <div class="rehearsal-bar">
                     <div class="role-selector"><span>🎭 我的角色:</span><select id="myRoleSelect" disabled><option value="">— 加载中 —</option></select></div>
                     <div class="progress-info" id="progressInfo">第0 / 0句</div>
                     <div class="nav-buttons"><button id="prevMyLineBtn" class="btn btn-sm" disabled>⬆️ 上一句我的台词</button><button id="nextMyLineBtn" class="btn btn-sm" disabled>⬇️ 下一句我的台词</button></div>
-                    <div class="action-buttons"><button id="rehearsalStartBtn" class="btn btn-sm" disabled>▶ 开始排练</button><button id="rehearsalNextBtn" class="btn btn-sm" disabled>💡提示/我说完了</button><button id="rehearsalResetBtn" class="btn btn-outline btn-sm" disabled>⟳ 重置</button></div>
+                    <div class="action-buttons"><button id="rehearsalStartBtn" class="btn btn-sm" disabled>▶ 开始排练</button><button id="rehearsalNextBtn" class="btn btn-sm" disabled>✅ 我说完了</button><button id="rehearsalResetBtn" class="btn btn-outline btn-sm" disabled>⟳ 重置</button></div>
                 </div>
-                <div style="font-size:0.7rem; margin-top:10px; background:#00000030; border-radius:2rem; padding:6px 12px;">✨ 已提示的台词会永久显示，不再隐藏。搜索关键词后请按回车键执行检索。</div>
             </div>
         </div>
     </div>
@@ -122,6 +133,12 @@
     let currentSearchIndex = -1;
     let currentSearchKeyword = "";
 
+    let showStageHints = true;
+    try {
+        const stored = localStorage.getItem('salem.showStageHints');
+        if (stored !== null) showStageHints = (stored !== '0');
+    } catch (e) {}
+
     // DOM
     const roleContainer = document.getElementById('roleContainer');
     const scriptLinesContainer = document.getElementById('scriptLinesContainer');
@@ -137,6 +154,7 @@
     const searchPrevBtn = document.getElementById('searchPrevBtn');
     const searchNextBtn = document.getElementById('searchNextBtn');
     const searchClearBtn = document.getElementById('searchClearBtn');
+    const toggleStageBtn = document.getElementById('toggleStageBtn');
     const actSelectorContainer = document.getElementById('actSelectorContainer');
     const actSelect = document.getElementById('actSelect');
     const toastEl = document.getElementById('toastMsg');
@@ -159,30 +177,66 @@
         isSpeaking = false;
     }
 
-    // 核心解析：将纯文本解析为台词数组（自动删除舞台指示）
+    // 核心解析：将纯文本解析为台词数组
+    //  - 整行以 〔...〕 包裹 → 独立舞台提示 { role: '__stage__', text }
+    //  - 行内 〔...〕 保留在台词文本中，渲染时灰色斜体，TTS 时剥离
     function parseScriptToLines(text) {
         const lines = text.split(/\r?\n/);
         const result = [];
         let pendingRole = null;
         let pendingText = "";
+        function flush() {
+            if (pendingRole && pendingText.trim()) result.push({ role: pendingRole, text: pendingText.trim() });
+            pendingRole = null;
+            pendingText = "";
+        }
         for (let rawLine of lines) {
-            let line = rawLine.trim();
+            const line = rawLine.trim();
             if (line === "") continue;
-            // 跳过舞台指示：以 '(' 或 '（' 开头且不包含冒号的行，或者纯括号内容行
-            const isStageDirection = /^[（(][^）)]*[）)]$/g.test(line) || (/^[（(][^:：]+[）)]$/g.test(line) && !line.includes(':') && !line.includes('：'));
-            if (isStageDirection) continue;
+            // 独立舞台提示行：〔...〕
+            if (/^〔.*〕$/.test(line)) {
+                flush();
+                result.push({ role: '__stage__', text: line.slice(1, -1) });
+                continue;
+            }
             const match = line.match(/^([^:：]+)[:：](.*)$/);
             if (match) {
-                if (pendingRole && pendingText.trim()) result.push({ role: pendingRole, text: pendingText.trim() });
+                flush();
                 pendingRole = match[1].trim();
                 pendingText = match[2].trim();
             } else {
                 if (pendingRole) pendingText += " " + line;
-                else if (line.length > 0) result.push({ role: "旁白", text: line });
+                else if (line.length > 0) result.push({ role: '旁白', text: line });
             }
         }
-        if (pendingRole && pendingText.trim()) result.push({ role: pendingRole, text: pendingText.trim() });
+        flush();
         return result;
+    }
+
+    // 朗读前剥离 〔...〕 舞台提示片段
+    function stripStageForTTS(text) {
+        if (!text) return '';
+        return text.replace(/〔[^〕]*〕/g, '').replace(/\s+/g, ' ').trim();
+    }
+
+    // 渲染对白文本：处理行内 〔...〕（灰色斜体 span）+ 搜索高亮 + 隐藏舞台提示模式
+    function renderDialogueText(text, keyword) {
+        if (!text) return '';
+        let processed = text;
+        if (!showStageHints) {
+            processed = text.replace(/〔[^〕]*〕/g, '').replace(/\s+/g, ' ').trim();
+        }
+        let html = '';
+        const re = /〔[^〕]*〕/g;
+        let m;
+        let lastEnd = 0;
+        while ((m = re.exec(processed)) !== null) {
+            html += highlightKeyword(processed.slice(lastEnd, m.index), keyword);
+            html += '<span class="stage-inline">' + highlightKeyword(m[0], keyword) + '</span>';
+            lastEnd = m.index + m[0].length;
+        }
+        html += highlightKeyword(processed.slice(lastEnd), keyword);
+        return html;
     }
 
     // 从完整文本中解析出多幕结构（基于 Markdown 标题，如 "### 第一幕 ###" 或 "## 第一幕"）
@@ -267,7 +321,9 @@
 
         scriptLines = allActs[currentActIndex].lines;
         rolesSet.clear();
-        scriptLines.forEach(line => rolesSet.add(line.role));
+        allActs.forEach(act => act.lines.forEach(line => {
+            if (line.role !== '__stage__') rolesSet.add(line.role);
+        }));
         const uniqueRoles = Array.from(rolesSet);
 
         if (window.speechSynthesis.getVoices().length === 0) {
@@ -422,33 +478,62 @@
         for (let idx = 0; idx < scriptLines.length; idx++) {
             const line = scriptLines[idx];
             const isCurrent = (rehearsalActive && idx === currentLineIndex);
-            let displayText = line.text;
-            const isMyRoleLine = (myRoleName !== "" && line.role === myRoleName);
-            const isPermanentlyRevealed = revealedLines.has(idx);
-            let hide = false;
-            if (!isPermanentlyRevealed && isMyRoleLine) {
-                if (rehearsalActive && idx === currentLineIndex && !revealedLines.has(idx)) hide = true;
-                else if (!(rehearsalActive && idx === currentLineIndex)) hide = true;
-            }
-            if (hide) displayText = '??? [点击下方按钮查看台词提示] ???';
-            let highlightedText = '';
-            if (!hide && currentSearchKeyword && currentSearchResults.includes(idx)) {
-                highlightedText = highlightKeyword(displayText, currentSearchKeyword);
-            } else {
-                highlightedText = escapeHtml(displayText);
-            }
-            let classNames = `line-item ${isCurrent ? 'highlight' : ''}`;
-            if (isMyRoleLine && myRoleName !== "") classNames += ' my-role-highlight';
             const isSearchResult = currentSearchResults.includes(idx);
             const searchResultStyle = (isSearchResult && idx === currentSearchIndex) ? ' style="background: #ffaa33; color:#1e2a3a; font-weight:bold;"' : '';
+
+            // 舞台提示行
+            if (line.role === '__stage__') {
+                if (!showStageHints) continue;
+                const stageText = currentSearchKeyword && isSearchResult
+                    ? highlightKeyword('〔' + line.text + '〕', currentSearchKeyword)
+                    : '〔' + escapeHtml(line.text) + '〕';
+                html += `<div class="line-item stage-line ${isCurrent ? 'highlight' : ''}" data-line-index="${idx}"${searchResultStyle}>
+                            <span class="stage-text">${stageText}</span>
+                         </div>`;
+                continue;
+            }
+
+            // 对白行
+            const isMyRoleLine = (myRoleName !== "" && line.role === myRoleName);
+            const isRevealed = revealedLines.has(idx);
+            const hide = isMyRoleLine && !isRevealed;
+            let textHtml;
+            if (hide) {
+                textHtml = escapeHtml('??? [点击右侧 💡提示 查看台词] ???');
+            } else {
+                const kw = (currentSearchKeyword && isSearchResult) ? currentSearchKeyword : '';
+                textHtml = renderDialogueText(line.text, kw);
+            }
+            let classNames = `line-item ${isCurrent ? 'highlight' : ''}`;
+            if (isMyRoleLine) classNames += ' my-role-highlight';
+            const hintBtnHtml = isMyRoleLine
+                ? `<button class="hint-btn ${isRevealed ? 'revealed' : ''}" data-hint-index="${idx}">${isRevealed ? '🙈 隐藏' : '💡 提示'}</button>`
+                : '';
             html += `<div class="${classNames}" data-line-index="${idx}"${searchResultStyle}>
-                        <span class="line-speaker">🎙️ ${escapeHtml(line.role)} :</span>
-                        <span class="line-text">${highlightedText}</span>
+                        <div class="line-row">
+                            <div class="line-content">
+                                <span class="line-speaker">🎙️ ${escapeHtml(line.role)} :</span>
+                                <span class="line-text">${textHtml}</span>
+                            </div>
+                            ${hintBtnHtml}
+                        </div>
                      </div>`;
         }
         scriptLinesContainer.innerHTML = html;
-        document.querySelectorAll('.line-item').forEach(el => {
+        document.querySelectorAll('.hint-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const idx = parseInt(btn.getAttribute('data-hint-index'));
+                if (isNaN(idx)) return;
+                if (revealedLines.has(idx)) revealedLines.delete(idx);
+                else revealedLines.add(idx);
+                renderScriptLines();
+            });
+        });
+        // 点击对白行可跳转；舞台提示行不可点击
+        document.querySelectorAll('.line-item:not(.stage-line)').forEach(el => {
             el.addEventListener('click', (e) => {
+                if (e.target.closest('.hint-btn')) return;
                 const idx = parseInt(el.getAttribute('data-line-index'));
                 if (!isNaN(idx) && scriptLines[idx]) {
                     if (rehearsalActive) stopSpeaking();
@@ -457,7 +542,7 @@
                     rehearsalStartBtn.textContent = '▶ 开始排练';
                     updateProgressDisplay();
                     renderScriptLines();
-                    showToast(`跳转至第${idx+1}句: ${scriptLines[idx].role}`);
+                    showToast(`跳转至: ${scriptLines[idx].role}`);
                     if (window.speechSynthesis) window.speechSynthesis.cancel();
                 }
             });
@@ -477,6 +562,7 @@
         const results = [];
         for (let i = 0; i < scriptLines.length; i++) {
             const line = scriptLines[i];
+            if (!showStageHints && line.role === '__stage__') continue;
             if (line.role.includes(keyword) || line.text.includes(keyword)) results.push(i);
         }
         currentSearchResults = results;
@@ -583,16 +669,25 @@
             return;
         }
         const line = scriptLines[currentLineIndex];
+        // 舞台提示行：不朗读，自动跳到下一句
+        if (line.role === '__stage__') {
+            currentLineIndex++;
+            renderScriptLines();
+            updateProgressDisplay();
+            await playCurrentLine();
+            return;
+        }
         const isMyTurn = (myRoleName !== "" && line.role === myRoleName);
         renderScriptLines();
         updateProgressDisplay();
         if (!isMyTurn) {
             const voiceForRole = roleVoiceMap.get(line.role) || null;
-            await speakText(line.text, voiceForRole, async () => {
+            const speakStr = stripStageForTTS(line.text);
+            await speakText(speakStr, voiceForRole, async () => {
                 if (rehearsalActive) { currentLineIndex++; await playCurrentLine(); }
             });
         } else {
-            showToast(`🎭 轮到你了！台词已隐藏，点击「💡提示/我说完了」查看原文或继续`);
+            showToast(`🎭 轮到你了！台词已隐藏，点击该行「💡 提示」查看原文，或点击「✅ 我说完了」继续`);
         }
     }
 
@@ -602,17 +697,12 @@
         const line = scriptLines[currentLineIndex];
         const isMyTurn = (myRoleName !== "" && line.role === myRoleName);
         if (!isMyTurn) { showToast("现在不是你的角色台词，请等待系统朗读完毕", true); return; }
-        if (!revealedLines.has(currentLineIndex)) {
-            revealedLines.add(currentLineIndex);
-            renderScriptLines();
-            showToast(`📖 提示：台词已永久显示 —— ${line.text.substring(0,80)}${line.text.length>80?'…':''}`);
-        } else {
-            currentLineIndex++;
-            renderScriptLines();
-            updateProgressDisplay();
-            if (currentLineIndex < scriptLines.length) await playCurrentLine();
-            else { showToast("🎉 排练结束！完美收官 🎉"); stopRehearsal(); }
-        }
+        revealedLines.add(currentLineIndex);
+        currentLineIndex++;
+        renderScriptLines();
+        updateProgressDisplay();
+        if (currentLineIndex < scriptLines.length) await playCurrentLine();
+        else { showToast("🎉 排练结束！完美收官 🎉"); stopRehearsal(); }
     }
 
     function stopRehearsal() {
@@ -648,8 +738,18 @@
     }
 
     function updateProgressDisplay() {
-        if (scriptLines.length) progressInfo.innerText = `第 ${currentLineIndex+1} / ${scriptLines.length} 句`;
-        else progressInfo.innerText = `第0 / 0句`;
+        if (!scriptLines.length) {
+            progressInfo.innerText = `第0 / 0句`;
+            return;
+        }
+        let total = 0;
+        let cur = 0;
+        for (let i = 0; i < scriptLines.length; i++) {
+            if (scriptLines[i].role === '__stage__') continue;
+            total++;
+            if (i <= currentLineIndex) cur++;
+        }
+        progressInfo.innerText = `第 ${cur} / ${total} 句`;
     }
 
     function escapeHtml(str) {
@@ -664,12 +764,7 @@
         currentLineIndex = 0;
         rehearsalActive = false;
         rehearsalStartBtn.textContent = '▶ 开始排练';
-        rolesSet.clear();
-        scriptLines.forEach(line => rolesSet.add(line.role));
-        const uniqueRoles = Array.from(rolesSet);
-        myRoleSelect.innerHTML = `<option value="">— 不选择角色(全自动) —</option>` + uniqueRoles.map(r => `<option value="${escapeHtml(r)}">${escapeHtml(r)}</option>`).join('');
-        if (uniqueRoles.includes(myRoleName)) myRoleSelect.value = myRoleName;
-        else myRoleSelect.value = "";
+        stopSpeaking();
         renderScriptLines();
         updateProgressDisplay();
         showToast(`已切换到「${allActs[currentActIndex].name}」`);
@@ -745,6 +840,19 @@
     searchNextBtn.addEventListener('click', () => jumpToSearchResult(1));
     searchClearBtn.addEventListener('click', clearSearchHighlight);
     searchInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') performSearch(); });
+
+    function updateStageToggleBtn() {
+        toggleStageBtn.textContent = showStageHints ? '🎭 隐藏舞台提示' : '🎭 显示舞台提示';
+    }
+    updateStageToggleBtn();
+    toggleStageBtn.addEventListener('click', () => {
+        showStageHints = !showStageHints;
+        try { localStorage.setItem('salem.showStageHints', showStageHints ? '1' : '0'); } catch (e) {}
+        updateStageToggleBtn();
+        if (currentSearchKeyword) performSearch();
+        renderScriptLines();
+        showToast(showStageHints ? '🎭 已显示舞台提示' : '🎭 已隐藏舞台提示');
+    });
     actSelect.addEventListener('change', (e) => {
         const idx = parseInt(e.target.value);
         if (!isNaN(idx) && idx !== currentActIndex) switchAct(idx);
