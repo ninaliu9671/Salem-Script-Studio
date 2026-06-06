@@ -101,6 +101,7 @@
                     <div class="nav-buttons">
                         <button id="prevMyLineBtn" class="btn btn-sm" disabled>⬆️ 上一句我的台词</button>
                         <button id="nextMyLineBtn" class="btn btn-sm" disabled>⬇️ 下一句我的台词</button>
+                        <button id="toggleAllLinesBtn" class="btn btn-sm" disabled>💡 全显示我的台词</button>
                     </div>
                     <div class="action-buttons">
                         <button id="rehearsalStartBtn" class="btn btn-sm" disabled>▶ 开始排练</button>
@@ -148,6 +149,7 @@
     const progressInfo = document.getElementById('progressInfo');
     const prevMyLineBtn = document.getElementById('prevMyLineBtn');
     const nextMyLineBtn = document.getElementById('nextMyLineBtn');
+    const toggleAllLinesBtn = document.getElementById('toggleAllLinesBtn');
     const searchInput = document.getElementById('searchInput');
     const searchPrevBtn = document.getElementById('searchPrevBtn');
     const searchNextBtn = document.getElementById('searchNextBtn');
@@ -458,6 +460,7 @@
                 if (isNaN(idx)) return;
                 if (revealedLines.has(idx)) revealedLines.delete(idx);
                 else revealedLines.add(idx);
+                updateToggleAllBtn();
                 renderScriptLines();
             });
         });
@@ -560,6 +563,7 @@
         revealedLines.clear();
         rehearsalStartBtn.textContent = '▶ 开始排练';
         updateProgressDisplay();
+        updateToggleAllBtn();
         renderScriptLines();
     }
 
@@ -572,6 +576,7 @@
         revealedLines.add(currentLineIndex);
         currentLineIndex++;
         saveProgress();
+        updateToggleAllBtn();
         renderScriptLines();
         updateProgressDisplay();
         if (currentLineIndex < scriptLines.length) await playCurrentLine();
@@ -676,7 +681,43 @@
         stopAudio();
         renderScriptLines();
         updateProgressDisplay();
+        updateToggleAllBtn();
         showToast(`已切换到「${allActs[currentActIndex].name}」`);
+    }
+
+    // ---------- 全显示/全隐藏我的台词 ----------
+    function getMyLineIndices() {
+        return scriptLines.reduce((acc, l, i) => {
+            if (l.role === myRoleName) acc.push(i);
+            return acc;
+        }, []);
+    }
+
+    function updateToggleAllBtn() {
+        if (!myRoleName) {
+            toggleAllLinesBtn.disabled = true;
+            toggleAllLinesBtn.textContent = '💡 全显示我的台词';
+            return;
+        }
+        toggleAllLinesBtn.disabled = false;
+        const myIndices = getMyLineIndices();
+        const allRevealed = myIndices.length > 0 && myIndices.every(i => revealedLines.has(i));
+        toggleAllLinesBtn.textContent = allRevealed ? '🙈 全隐藏我的台词' : '💡 全显示我的台词';
+    }
+
+    function toggleAllMyLines() {
+        if (!myRoleName) return;
+        const myIndices = getMyLineIndices();
+        const allRevealed = myIndices.every(i => revealedLines.has(i));
+        if (allRevealed) {
+            myIndices.forEach(i => revealedLines.delete(i));
+            showToast('🙈 已隐藏全部我的台词');
+        } else {
+            myIndices.forEach(i => revealedLines.add(i));
+            showToast('💡 已显示全部我的台词');
+        }
+        updateToggleAllBtn();
+        renderScriptLines();
     }
 
     // ---------- 事件绑定 ----------
@@ -685,6 +726,7 @@
     rehearsalResetBtn.addEventListener('click', () => { stopRehearsal(); resetRehearsalState(); startRehearsal(); });
     prevMyLineBtn.addEventListener('click', () => jumpToMyLine('prev'));
     nextMyLineBtn.addEventListener('click', () => jumpToMyLine('next'));
+    toggleAllLinesBtn.addEventListener('click', toggleAllMyLines);
     searchPrevBtn.addEventListener('click', () => jumpToSearchResult(-1));
     searchNextBtn.addEventListener('click', () => jumpToSearchResult(1));
     searchClearBtn.addEventListener('click', clearSearchHighlight);
@@ -700,6 +742,7 @@
         currentLineIndex = 0;
         saveProgress();
         renderScriptLines();
+        updateToggleAllBtn();
         showToast(`已切换到角色：${myRoleName || "全自动模式"}`);
     });
 
