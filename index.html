@@ -211,7 +211,9 @@
     }
 
     function getAudioFile(role, text) {
-        return audioMap.get(role + '|' + text) || null;
+        // audio_index.json 存的是剥除了舞台提示后的文本，需要去掉〔...〕再查
+        const stripped = text.replace(/〔[^〕]*〕/g, '').replace(/\s+/g, ' ').trim();
+        return audioMap.get(role + '|' + stripped) || null;
     }
 
     // ---------- 剧本解析 ----------
