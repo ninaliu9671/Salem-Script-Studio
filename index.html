@@ -164,6 +164,42 @@
         setTimeout(() => { toastEl.style.opacity = '0'; }, 3000);
     }
 
+    // ---------- 进度持久化 ----------
+    function saveProgress() {
+        try {
+            localStorage.setItem('salem.lastActIndex',  currentActIndex);
+            localStorage.setItem('salem.lastLineIndex', currentLineIndex);
+            localStorage.setItem('salem.lastRole',      myRoleName);
+        } catch(e) {}
+    }
+
+    function restoreProgress() {
+        try {
+            const savedAct  = parseInt(localStorage.getItem('salem.lastActIndex')  ?? '0');
+            const savedLine = parseInt(localStorage.getItem('salem.lastLineIndex') ?? '0');
+            const savedRole = localStorage.getItem('salem.lastRole') ?? '';
+
+            if (!isNaN(savedAct) && savedAct > 0 && savedAct < allActs.length) {
+                currentActIndex = savedAct;
+                scriptLines = allActs[currentActIndex].lines;
+                if (allActs.length > 1) actSelect.value = savedAct;
+            }
+            if (!isNaN(savedLine) && savedLine > 0 && savedLine < scriptLines.length) {
+                currentLineIndex = savedLine;
+            }
+            if (savedRole && Array.from(rolesSet).includes(savedRole)) {
+                myRoleName = savedRole;
+                myRoleSelect.value = savedRole;
+            }
+            if (savedLine > 0) {
+                updateProgressDisplay();
+                renderScriptLines();
+                setTimeout(scrollToCurrentLine, 100);
+                showToast(`📍 已恢复上次进度：第 ${savedLine + 1} 句`);
+            }
+        } catch(e) {}
+    }
+
     // ---------- 音频播放 ----------
     function stopAudio() {
         if (currentAudio) {
@@ -321,6 +357,7 @@
             rehearsalActive = false;
             myRoleName = "";
             refreshUI();
+            restoreProgress();
             showToast(`✅ 已加载剧本，共 ${allActs.length} 幕`);
         } catch (err) {
             showToast(`剧本加载失败: ${err.message}`, true);
@@ -431,6 +468,7 @@
                     currentLineIndex = idx;
                     rehearsalActive = false;
                     rehearsalStartBtn.textContent = '▶ 开始排练';
+                    saveProgress();
                     updateProgressDisplay();
                     renderScriptLines();
                     showToast(`跳转至: ${scriptLines[idx].role}`);
@@ -530,6 +568,7 @@
         if (!isMyTurn) { showToast("现在是其他角色的台词，请等待语音播放完毕", true); return; }
         revealedLines.add(currentLineIndex);
         currentLineIndex++;
+        saveProgress();
         renderScriptLines();
         updateProgressDisplay();
         if (currentLineIndex < scriptLines.length) await playCurrentLine();
@@ -614,6 +653,7 @@
             currentLineIndex = target;
             rehearsalActive = false;
             rehearsalStartBtn.textContent = '▶ 开始排练';
+            saveProgress();
             updateProgressDisplay();
             renderScriptLines();
             const el = document.querySelector(`.line-item[data-line-index="${target}"]`);
@@ -655,6 +695,7 @@
         myRoleName = e.target.value;
         revealedLines.clear();
         currentLineIndex = 0;
+        saveProgress();
         renderScriptLines();
         showToast(`已切换到角色：${myRoleName || "全自动模式"}`);
     });
